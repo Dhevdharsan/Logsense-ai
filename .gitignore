@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+npm-debug.log*
+
+# Docker volumes (local data, not code)
+postgres_data/
+redis_data/
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
