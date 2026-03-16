@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from loguru import logger
 from app.config import settings
 from app.database import create_tables
-from app.routers import ingest, dashboard
+from app.routers import ingest, dashboard, analyze
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,11 +19,14 @@ app = FastAPI(title="LogSense AI API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:3001"],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(ingest.router)
 app.include_router(dashboard.router)
+app.include_router(analyze.router)
 
 @app.get("/health", tags=["System"])
 async def health_check():
