@@ -44,3 +44,12 @@ class JobStatusResponse(BaseModel):
     error: str | None
     started_at: datetime | None
     completed_at: datetime | None
+
+
+class LLMSummarizeResponse(BaseModel):
+    cluster_id: int
+    probable_root_cause: str
+    confidence: str
+    recommended_actions: list[str]
+    related_components: list[str]
+    from_cache: bool
