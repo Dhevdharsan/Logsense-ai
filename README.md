@@ -33,13 +33,7 @@ Open http://localhost:3000
 
 ## Architecture
 
-Browser (localhost:3000)
-    |
-FastAPI Backend (localhost:8000)
-    |
-    |-- PostgreSQL + pgvector  (stores logs + ML vectors)
-    |-- Redis                  (caches LLM summaries)
-    |-- Ollama                 (runs LLM locally)
+![LogSense AI Architecture](logsense_arch.png)
 
 ## API Reference
 
