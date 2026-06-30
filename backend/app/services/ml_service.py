@@ -6,7 +6,7 @@ from app.database import AsyncSessionLocal
 from app.models.log_entry import LogEntry
 from app.models.cluster import Cluster, AnomalyRun
 from app.ml.preprocessor import LogPreprocessor
-from app.ml.anomaly_detector import AnomalyDetector, run_anomaly_detection
+from app.ml.anomaly_detector import AnomalyDetector, flag_by_rarity, run_anomaly_detection
 from app.ml.clusterer import LogClusterer, save_clusters
 from app.config import settings
 from loguru import logger
@@ -59,15 +59,14 @@ async def run_pipeline(log_ids=None, job_id="manual"):
 
         await update_job_status(job_id, {"progress_pct": 40})
 
-        # Step 2: Anomaly detection
+        # Step 2: Isolation Forest — anomaly scores only (not used to flag is_anomaly)
         detector = AnomalyDetector()
-        labels, scores = detector.fit_predict(vectors)
-        anomaly_count = await run_anomaly_detection(db, db_log_ids, vectors, labels, scores)
+        if_scores = detector.fit_predict(vectors)
 
-        await update_job_status(job_id, {"progress_pct": 70, "anomalies_found": anomaly_count})
+        await update_job_status(job_id, {"progress_pct": 55})
 
-        # Step 3: Clustering — clear old clusters first
-        # Must clear foreign key references in log_entries BEFORE deleting clusters
+        # Step 3: Clustering — must run before anomaly flagging
+        # Clear old clusters first (FK references in log_entries before deleting clusters)
         await db.execute(update(LogEntry).values(cluster_id=None))
         await db.commit()
         await db.execute(delete(Cluster))
@@ -77,9 +76,17 @@ async def run_pipeline(log_ids=None, job_id="manual"):
         cluster_labels = clusterer.fit_predict(vectors)
         clusters_created = await save_clusters(db, db_log_ids, templates, vectors, cluster_labels)
 
-        await update_job_status(job_id, {"progress_pct": 90, "clusters_found": clusters_created})
+        await update_job_status(job_id, {"progress_pct": 75, "clusters_found": clusters_created})
 
-        # Step 4: Record the run
+        # Step 4: Flag anomalies by cluster rarity — stable, dataset-relative threshold
+        # A log is anomalous if its cluster is < anomaly_cluster_rarity_pct % of all logs,
+        # or if DBSCAN left it as noise (no cluster at all).
+        is_anomaly_flags = flag_by_rarity(cluster_labels, len(logs), settings.anomaly_cluster_rarity_pct)
+        anomaly_count = await run_anomaly_detection(db, db_log_ids, is_anomaly_flags, if_scores)
+
+        await update_job_status(job_id, {"progress_pct": 90, "anomalies_found": anomaly_count})
+
+        # Step 5: Record the run
         duration = time.time() - start_time
         await db.execute(
             insert(AnomalyRun).values(

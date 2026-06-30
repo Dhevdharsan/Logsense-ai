@@ -8,9 +8,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://logsense:logsense_dev_pwd@localhost:5432/logsense_db"
     redis_url: str = "redis://localhost:6379/0"
     ollama_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3"
+    ollama_model: str = "llama3.2:3b"
     ollama_timeout_seconds: int = 60
     anomaly_contamination: float = 0.05
+    anomaly_cluster_rarity_pct: float = 2.0
     dbscan_eps: float = 0.5
     dbscan_min_samples: int = 3
     tfidf_max_features: int = 384
