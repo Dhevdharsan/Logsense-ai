@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ollama_timeout_seconds: int = 60
     anomaly_contamination: float = 0.05
     anomaly_cluster_rarity_pct: float = 2.0
+    anomaly_absolute_floor: int = 15
     dbscan_eps: float = 0.5
     dbscan_min_samples: int = 3
     tfidf_max_features: int = 384

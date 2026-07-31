@@ -10,6 +10,8 @@ class ClusterResponse(BaseModel):
     llm_confidence: str | None
     summary_cached_at: datetime | None
     created_at: datetime
+    anomaly_count: int = 0
+    anomaly_pct: float = 0.0
     model_config = {"from_attributes": True}
 
 class ClusterListResponse(BaseModel):

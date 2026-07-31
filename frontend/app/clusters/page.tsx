@@ -9,6 +9,13 @@ const CONF_COLORS: Record<string, string> = {
   low:    "bg-red-900 text-red-300",
 };
 
+function anomalyBadgeClass(pct: number): string {
+  if (pct >= 50) return "bg-red-900 text-red-300";
+  if (pct >= 20) return "bg-orange-900 text-orange-300";
+  if (pct >= 5)  return "bg-yellow-900 text-yellow-300";
+  return "bg-gray-800 text-gray-500";
+}
+
 export default function ClustersPage() {
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -82,6 +89,9 @@ export default function ClustersPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400">{cluster.size} logs</span>
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${anomalyBadgeClass(cluster.anomaly_pct)}`}>
+                      {cluster.anomaly_pct.toFixed(1)}% anomaly
+                    </span>
                     {cluster.llm_confidence && (
                       <span className={`text-xs px-2 py-0.5 rounded font-medium ${CONF_COLORS[cluster.llm_confidence] ?? "bg-gray-800 text-gray-400"}`}>
                         {cluster.llm_confidence} confidence
