@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from loguru import logger
 from app.config import settings
 from app.database import create_tables
-from app.routers import ingest, dashboard, analyze, llm
+from app.routers import ingest, dashboard, analyze, llm, query
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +28,7 @@ app.include_router(ingest.router)
 app.include_router(dashboard.router)
 app.include_router(analyze.router)
 app.include_router(llm.router)
+app.include_router(query.router)
 
 @app.get("/health", tags=["System"])
 async def health_check():

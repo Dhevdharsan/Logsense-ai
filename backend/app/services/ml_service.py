@@ -6,6 +6,7 @@ from app.database import AsyncSessionLocal
 from app.models.log_entry import LogEntry
 from app.models.cluster import Cluster, AnomalyRun
 from app.ml.preprocessor import LogPreprocessor
+from app.ml.vectorizer_store import save_preprocessor, pad_to_dim, EMBED_DIM
 from app.ml.anomaly_detector import AnomalyDetector, flag_by_rarity, run_anomaly_detection
 from app.ml.clusterer import LogClusterer, save_clusters
 from app.config import settings
@@ -53,9 +54,17 @@ async def run_pipeline(log_ids=None, job_id="manual"):
         # Step 1: Preprocess
         preprocessor = LogPreprocessor(max_features=settings.tfidf_max_features)
         vectors, templates = preprocessor.fit_transform(messages)
+        # Persist the template AND the embedding for each log. The embedding is
+        # what the RAG /query path cosine-searches; padded to the fixed Vector
+        # dimension so a small-vocab corpus still fits the column.
         for i, log in enumerate(logs):
             log.template = templates[i]
+            log.embedding = pad_to_dim(vectors[i], EMBED_DIM)
         await db.commit()
+
+        # Save the fitted vectorizer alongside the embeddings it produced, so the
+        # query path can embed questions into this exact same TF-IDF space.
+        save_preprocessor(preprocessor)
 
         await update_job_status(job_id, {"progress_pct": 40})
 
